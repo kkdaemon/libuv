@@ -29,6 +29,7 @@
 #include "handle-inl.h"
 #include "req-inl.h"
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 
 const unsigned int uv_directory_watcher_buffer_size = 4096;
 
@@ -541,3 +542,5 @@ void uv_fs_event_endgame(uv_loop_t* loop, uv_fs_event_t* handle) {
     uv__handle_close(handle);
   }
 }
+
+#endif

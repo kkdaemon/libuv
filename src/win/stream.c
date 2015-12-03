@@ -36,7 +36,11 @@ int uv_listen(uv_stream_t* stream, int backlog, uv_connection_cb cb) {
       err = uv_tcp_listen((uv_tcp_t*)stream, backlog, cb);
       break;
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_pipe_listen((uv_pipe_t*)stream, backlog, cb);
+#else
+      assert(0);
+#endif
       break;
     default:
       assert(0);
@@ -55,7 +59,11 @@ int uv_accept(uv_stream_t* server, uv_stream_t* client) {
       err = uv_tcp_accept((uv_tcp_t*)server, (uv_tcp_t*)client);
       break;
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_pipe_accept((uv_pipe_t*)server, client);
+#else
+      assert(0);
+#endif
       break;
     default:
       assert(0);
@@ -83,10 +91,18 @@ int uv_read_start(uv_stream_t* handle, uv_alloc_cb alloc_cb,
       err = uv_tcp_read_start((uv_tcp_t*)handle, alloc_cb, read_cb);
       break;
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_pipe_read_start((uv_pipe_t*)handle, alloc_cb, read_cb);
+#else
+      assert(0);
+#endif
       break;
     case UV_TTY:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_tty_read_start((uv_tty_t*) handle, alloc_cb, read_cb);
+#else
+      assert(0);
+#endif
       break;
     default:
       assert(0);
@@ -104,10 +120,18 @@ int uv_read_stop(uv_stream_t* handle) {
 
   err = 0;
   if (handle->type == UV_TTY) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
     err = uv_tty_read_stop((uv_tty_t*) handle);
+#else
+    assert(0);
+#endif
   } else {
     if (handle->type == UV_NAMED_PIPE) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv__pipe_stop_read((uv_pipe_t*) handle);
+#else
+      assert(0);
+#endif
     } else {
       handle->flags &= ~UV_HANDLE_READING;
     }
@@ -136,10 +160,18 @@ int uv_write(uv_write_t* req,
       err = uv_tcp_write(loop, req, (uv_tcp_t*) handle, bufs, nbufs, cb);
       break;
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_pipe_write(loop, req, (uv_pipe_t*) handle, bufs, nbufs, cb);
+#else
+      assert(0);
+#endif
       break;
     case UV_TTY:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_tty_write(loop, req, (uv_tty_t*) handle, bufs, nbufs, cb);
+#else
+      assert(0);
+#endif
       break;
     default:
       assert(0);
@@ -165,6 +197,7 @@ int uv_write2(uv_write_t* req,
   err = ERROR_INVALID_PARAMETER;
   switch (handle->type) {
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       err = uv_pipe_write2(loop,
                            req,
                            (uv_pipe_t*) handle,
@@ -172,6 +205,9 @@ int uv_write2(uv_write_t* req,
                            nbufs,
                            send_handle,
                            cb);
+#else
+      assert(0);
+#endif
       break;
     default:
       assert(0);
@@ -193,7 +229,11 @@ int uv_try_write(uv_stream_t* stream,
     case UV_TCP:
       return uv__tcp_try_write((uv_tcp_t*) stream, bufs, nbufs);
     case UV_TTY:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       return uv__tty_try_write((uv_tty_t*) stream, bufs, nbufs);
+#else
+      return UV_ENOSYS;
+#endif
     case UV_NAMED_PIPE:
       return UV_EAGAIN;
     default:

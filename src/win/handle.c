@@ -40,11 +40,15 @@ uv_handle_type uv_guess_handle(uv_file file) {
 
   switch (GetFileType(handle)) {
     case FILE_TYPE_CHAR:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       if (GetConsoleMode(handle, &mode)) {
         return UV_TTY;
       } else {
         return UV_FILE;
       }
+#else
+      return UV_FILE;
+#endif
 
     case FILE_TYPE_PIPE:
       return UV_NAMED_PIPE;
@@ -81,11 +85,19 @@ void uv_close(uv_handle_t* handle, uv_close_cb cb) {
       return;
 
     case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv_pipe_close(loop, (uv_pipe_t*) handle);
+#else
+      assert(0);
+#endif
       return;
 
     case UV_TTY:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv_tty_close((uv_tty_t*) handle);
+#else
+      assert(0);
+#endif
       return;
 
     case UV_UDP:
@@ -125,21 +137,37 @@ void uv_close(uv_handle_t* handle, uv_close_cb cb) {
       return;
 
     case UV_SIGNAL:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv_signal_close(loop, (uv_signal_t*) handle);
+#else
+      assert(0);
+#endif
       return;
 
     case UV_PROCESS:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv_process_close(loop, (uv_process_t*) handle);
+#else
+      assert(0);
+#endif
       return;
 
     case UV_FS_EVENT:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv_fs_event_close(loop, (uv_fs_event_t*) handle);
+#else
+      assert(0);
+#endif
       return;
 
     case UV_FS_POLL:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
       uv__fs_poll_close((uv_fs_poll_t*) handle);
       uv__handle_closing(handle);
       uv_want_endgame(loop, handle);
+#else
+      assert(0);
+#endif
       return;
 
     default:

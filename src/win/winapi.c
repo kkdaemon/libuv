@@ -24,7 +24,6 @@
 #include "uv.h"
 #include "internal.h"
 
-
 /* Ntdll function pointers */
 sRtlNtStatusToDosError pRtlNtStatusToDosError;
 sNtDeviceIoControlFile pNtDeviceIoControlFile;
@@ -104,7 +103,11 @@ void uv_winapi_init() {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   kernel32_module = GetModuleHandleA("kernel32.dll");
+#else
+  kernel32_module = GetModuleHandleA("KernelBase.dll");
+#endif
   if (kernel32_module == NULL) {
     uv_fatal_error(GetLastError(), "GetModuleHandleA");
   }

@@ -114,6 +114,7 @@ INLINE static void uv_insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
 }
 
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 #define DELEGATE_STREAM_REQ(loop, req, method, handle_at)                     \
   do {                                                                        \
     switch (((uv_handle_t*) (req)->handle_at)->type) {                        \
@@ -139,6 +140,29 @@ INLINE static void uv_insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
         assert(0);                                                            \
     }                                                                         \
   } while (0)
+#else
+#define DELEGATE_STREAM_REQ(loop, req, method, handle_at)                     \
+  do {                                                                        \
+    switch (((uv_handle_t*) (req)->handle_at)->type) {                        \
+      case UV_TCP:                                                            \
+        uv_process_tcp_##method##_req(loop,                                   \
+                                      (uv_tcp_t*) ((req)->handle_at),         \
+                                      req);                                   \
+        break;                                                                \
+                                                                              \
+      case UV_NAMED_PIPE:                                                     \
+        assert(0);                                                            \
+        break;                                                                \
+                                                                              \
+      case UV_TTY:                                                            \
+        assert(0);                                                            \
+        break;                                                                \
+                                                                              \
+      default:                                                                \
+        assert(0);                                                            \
+    }                                                                         \
+  } while (0)
+#endif
 
 
 INLINE static int uv_process_reqs(uv_loop_t* loop) {
@@ -177,10 +201,12 @@ INLINE static int uv_process_reqs(uv_loop_t* loop) {
       case UV_SHUTDOWN:
         /* Tcp shutdown requests don't come here. */
         assert(((uv_shutdown_t*) req)->handle->type == UV_NAMED_PIPE);
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_process_pipe_shutdown_req(
             loop,
             (uv_pipe_t*) ((uv_shutdown_t*) req)->handle,
             (uv_shutdown_t*) req);
+#endif
         break;
 
       case UV_UDP_RECV:
@@ -198,7 +224,11 @@ INLINE static int uv_process_reqs(uv_loop_t* loop) {
         break;
 
       case UV_SIGNAL_REQ:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_process_signal_req(loop, (uv_signal_t*) req->data, req);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_POLL_REQ:
@@ -206,11 +236,19 @@ INLINE static int uv_process_reqs(uv_loop_t* loop) {
         break;
 
       case UV_PROCESS_EXIT:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_process_proc_exit(loop, (uv_process_t*) req->data);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_FS_EVENT_REQ:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_process_fs_event_req(loop, req, (uv_fs_event_t*) req->data);
+#else
+        assert(0);
+#endif
         break;
 
       default:

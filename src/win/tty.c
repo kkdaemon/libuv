@@ -40,6 +40,7 @@
 #include "stream-inl.h"
 #include "req-inl.h"
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 
 #define UNICODE_REPLACEMENT_CHARACTER (0xfffd)
 
@@ -2082,3 +2083,5 @@ int uv_tty_reset_mode(void) {
   /* Not necessary to do anything. */
   return 0;
 }
+
+#endif

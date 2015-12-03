@@ -33,6 +33,7 @@
 #include "handle-inl.h"
 #include "req-inl.h"
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 
 #define SIGKILL         9
 
@@ -1245,3 +1246,5 @@ int uv_kill(int pid, int signum) {
 
   return err;  /* err is already translated. */
 }
+
+#endif

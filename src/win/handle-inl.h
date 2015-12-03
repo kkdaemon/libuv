@@ -110,11 +110,19 @@ INLINE static void uv_process_endgames(uv_loop_t* loop) {
         break;
 
       case UV_NAMED_PIPE:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_pipe_endgame(loop, (uv_pipe_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_TTY:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_tty_endgame(loop, (uv_tty_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_UDP:
@@ -140,19 +148,35 @@ INLINE static void uv_process_endgames(uv_loop_t* loop) {
         break;
 
       case UV_SIGNAL:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_signal_endgame(loop, (uv_signal_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_PROCESS:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_process_endgame(loop, (uv_process_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_FS_EVENT:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv_fs_event_endgame(loop, (uv_fs_event_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       case UV_FS_POLL:
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
         uv__fs_poll_endgame(loop, (uv_fs_poll_t*) handle);
+#else
+        assert(0);
+#endif
         break;
 
       default:

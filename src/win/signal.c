@@ -26,6 +26,7 @@
 #include "handle-inl.h"
 #include "req-inl.h"
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 
 RB_HEAD(uv_signal_tree_s, uv_signal_s);
 
@@ -354,3 +355,5 @@ void uv_signal_endgame(uv_loop_t* loop, uv_signal_t* handle) {
 
   uv__handle_close(handle);
 }
+
+#endif

@@ -31,6 +31,8 @@
 #include "stream-inl.h"
 #include "req-inl.h"
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
+
 typedef struct uv__ipc_queue_item_s uv__ipc_queue_item_t;
 
 struct uv__ipc_queue_item_s {
@@ -2116,3 +2118,5 @@ uv_handle_type uv_pipe_pending_type(uv_pipe_t* handle) {
   else
     return UV_TCP;
 }
+
+#endif

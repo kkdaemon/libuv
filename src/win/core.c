@@ -80,8 +80,82 @@ static void uv__crt_invalid_parameter_handler(const wchar_t* expression,
 }
 #endif
 
+#if defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
+
+HMODULE (WINAPI* GetModuleHandleA)(LPCSTR lpModuleName);
+HMODULE (WINAPI* LoadLibraryExW)(LPCWSTR lpLibFileName,
+                                 HANDLE hFile,
+                                 DWORD dwFlags);
+BOOL (WINAPI* GlobalMemoryStatusEx)(LPMEMORYSTATUSEX lpBuffer);
+HLOCAL (WINAPI* LocalFree)(HLOCAL hMem);
+HANDLE (WINAPI* CreateIoCompletionPort)(HANDLE FileHandle,
+                                        HANDLE ExistingCompletionPort,
+                                        ULONG_PTR CompletionKey,
+                                        DWORD NumberOfConcurrentThreads);
+BOOL (WINAPI* GetQueuedCompletionStatus)(HANDLE CompletionPort,
+                                         LPDWORD lpNumberOfBytesTransferred,
+                                         PULONG_PTR lpCompletionKey,
+                                         LPOVERLAPPED* lpOverlapped,
+                                         DWORD dwMilliseconds);
+BOOL (WINAPI* PostQueuedCompletionStatus)(HANDLE CompletionPort,
+                                          DWORD dwNumberOfBytesTransferred,
+                                          ULONG_PTR dwCompletionKey,
+                                          LPOVERLAPPED lpOverlapped);
+BOOL (WINAPI* CancelIo)(HANDLE hFile);
+BOOL (WINAPI* QueueUserWorkItem)(LPTHREAD_START_ROUTINE Function,
+                                 PVOID Context,
+                                 ULONG Flags);
+BOOL (WINAPI* RegisterWaitForSingleObjectEx)(PHANDLE phNewWaitObject,
+                                             HANDLE hObject,
+                                             WAITORTIMERCALLBACK Callback,
+                                             PVOID Context,
+                                             ULONG dwMilliseconds,
+                                             ULONG dwFlags);
+BOOL (WINAPI* UnregisterWaitEx)(HANDLE WaitHandle, HANDLE CompletionEvent);
+BOOL (WINAPI* GetProcessTimes)(HANDLE hProcess,
+                               LPFILETIME lpCreationTime,
+                               LPFILETIME lpExitTime,
+                               LPFILETIME lpKernelTime,
+                               LPFILETIME lpUserTime);
+BOOL (WINAPI* SetHandleInformation)(HANDLE hObject,DWORD dwMask,DWORD dwFlags);
+BOOL (WINAPI* GetFileInformationByHandle)(HANDLE hFile,
+                               LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
+UINT (WINAPI* SetErrorMode)(UINT uMode);
+
+static void uv_winuap_init_functions()
+{
+  HMODULE hkernel;
+  MEMORY_BASIC_INFORMATION bi;
+  
+  /* Get HMODULE of kernel dll, KernelBase.dll for Universal Apps */
+  void* base = (void*)&GetModuleFileNameA;
+  VirtualQuery(base, &bi, sizeof(bi));
+  hkernel = (HMODULE)bi.AllocationBase;
+  
+  /* Get necessary function pointers */
+  (void*)GetModuleHandleA = GetProcAddress(hkernel, "GetModuleHandleA");
+  (void*)LoadLibraryExW = GetProcAddress(hkernel, "LoadLibraryExW");
+  (void*)GlobalMemoryStatusEx = GetProcAddress(hkernel, "GlobalMemoryStatusEx");
+  (void*)LocalFree = GetProcAddress(hkernel, "LocalFree");
+  (void*)CreateIoCompletionPort = GetProcAddress(hkernel, "CreateIoCompletionPort");
+  (void*)GetQueuedCompletionStatus = GetProcAddress(hkernel, "GetQueuedCompletionStatus");
+  (void*)PostQueuedCompletionStatus = GetProcAddress(hkernel, "PostQueuedCompletionStatus");
+  (void*)CancelIo = GetProcAddress(hkernel, "CancelIo");
+  (void*)QueueUserWorkItem = GetProcAddress(hkernel, "QueueUserWorkItem");
+  (void*)RegisterWaitForSingleObjectEx = GetProcAddress(hkernel, "RegisterWaitForSingleObjectEx");
+  (void*)UnregisterWaitEx = GetProcAddress(hkernel, "UnregisterWaitEx");
+  (void*)GetProcessTimes = GetProcAddress(hkernel, "GetProcessTimes");
+  (void*)SetHandleInformation = GetProcAddress(hkernel, "SetHandleInformation");
+  (void*)GetFileInformationByHandle = GetProcAddress(hkernel, "GetFileInformationByHandle");
+  (void*)SetErrorMode = GetProcAddress(hkernel, "SetErrorMode");
+}
+#endif
 
 static void uv_init(void) {
+#if defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
+  uv_winuap_init_functions();
+#endif
+
   /* Tell Windows that we will handle critical errors. */
   SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX |
                SEM_NOOPENFILEERRORBOX);
@@ -109,6 +183,7 @@ static void uv_init(void) {
   /* Initialize winsock */
   uv_winsock_init();
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   /* Initialize FS */
   uv_fs_init();
 
@@ -117,6 +192,7 @@ static void uv_init(void) {
 
   /* Initialize console */
   uv_console_init();
+#endif
 
   /* Initialize utilities */
   uv__util_init();

@@ -262,6 +262,7 @@ int uv_chdir(const char* dir) {
     return uv_translate_sys_error(GetLastError());
   }
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   /* Windows stores the drive-local path in an "hidden" environment variable, */
   /* which has the form "=C:=C:\Windows". SetCurrentDirectory does not */
   /* update this, so we'll have to do it. */
@@ -305,7 +306,7 @@ int uv_chdir(const char* dir) {
       return uv_translate_sys_error(GetLastError());
     }
   }
-
+#endif
   return 0;
 }
 
@@ -341,6 +342,7 @@ uint64_t uv_get_total_memory(void) {
 
 
 int uv_parent_pid() {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   int parent_pid = -1;
   HANDLE handle;
   PROCESSENTRY32 pe;
@@ -360,6 +362,9 @@ int uv_parent_pid() {
 
   CloseHandle(handle);
   return parent_pid;
+#else
+  return -1;
+#endif
 }
 
 
@@ -377,6 +382,7 @@ char** uv_setup_args(int argc, char** argv) {
 
 
 int uv_set_process_title(const char* title) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   int err;
   int length;
   WCHAR* title_w = NULL;
@@ -422,10 +428,14 @@ int uv_set_process_title(const char* title) {
 done:
   uv__free(title_w);
   return uv_translate_sys_error(err);
+#else
+  return UV_ENOSYS;
+#endif
 }
 
 
 static int uv__get_process_title() {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   WCHAR title_w[MAX_TITLE_LENGTH];
   int length;
 
@@ -452,6 +462,10 @@ static int uv__get_process_title() {
   }
 
   return 0;
+#else
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return -1;
+#endif
 }
 
 
@@ -502,6 +516,7 @@ uint64_t uv__hrtime(double scale) {
 
 
 int uv_resident_set_memory(size_t* rss) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   HANDLE current_process;
   PROCESS_MEMORY_COUNTERS pmc;
 
@@ -514,10 +529,14 @@ int uv_resident_set_memory(size_t* rss) {
   *rss = pmc.WorkingSetSize;
 
   return 0;
+#else
+  return UV_ENOSYS;
+#endif
 }
 
 
 int uv_uptime(double* uptime) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   BYTE stack_buffer[4096];
   BYTE* malloced_buffer = NULL;
   BYTE* buffer = (BYTE*) stack_buffer;
@@ -615,10 +634,14 @@ int uv_uptime(double* uptime) {
   uv__free(malloced_buffer);
   *uptime = 0;
   return UV_EIO;
+#else
+  return UV_ENOSYS;
+#endif
 }
 
 
 int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   uv_cpu_info_t* cpu_infos;
   SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi;
   DWORD sppi_size;
@@ -776,6 +799,9 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
   uv__free(sppi);
 
   return uv_translate_sys_error(err);
+#else
+  return UV_ENOSYS;
+#endif
 }
 
 
@@ -790,6 +816,7 @@ void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count) {
 }
 
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 static int is_windows_version_or_greater(DWORD os_major,
                                          DWORD os_minor,
                                          WORD service_pack_major,
@@ -820,6 +847,7 @@ static int is_windows_version_or_greater(DWORD os_major,
     condition_mask);
 }
 
+#endif
 
 static int address_prefix_match(int family,
                                 struct sockaddr* address,
@@ -871,6 +899,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
   int is_vista_or_greater;
   ULONG flags;
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   is_vista_or_greater = is_windows_version_or_greater(6, 0, 0, 0);
   if (is_vista_or_greater) {
     flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
@@ -883,6 +912,11 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
     flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
       GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_PREFIX;
   }
+#else
+  is_vista_or_greater = 1;
+  flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+      GAA_FLAG_SKIP_DNS_SERVER;
+#endif
 
 
   /* Fetch the size of the adapters reported by windows, and then get the */
@@ -1169,6 +1203,7 @@ int uv_getrusage(uv_rusage_t *uv_rusage) {
 
 
 int uv_os_homedir(char* buffer, size_t* size) {
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
   HANDLE token;
   wchar_t path[MAX_PATH];
   DWORD bufsize;
@@ -1229,4 +1264,7 @@ convert_buffer:
 
   *size = bufsize - 1;
   return 0;
+#else
+  return UV_ENOSYS;
+#endif
 }

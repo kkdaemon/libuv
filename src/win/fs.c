@@ -37,6 +37,7 @@
 
 #include <wincrypt.h>
 
+#if !defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
 
 #define UV_FS_FREE_PATHS         0x0002
 #define UV_FS_FREE_PTR           0x0008
@@ -2355,3 +2356,5 @@ int uv_fs_futime(uv_loop_t* loop, uv_fs_t* req, uv_file fd, double atime,
     return req->result;
   }
 }
+
+#endif

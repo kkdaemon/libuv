@@ -31,6 +31,15 @@ typedef intptr_t ssize_t;
 
 #include <winsock2.h>
 
+/* Detection of Universal Windows Platform,
+   after winsock2.h which includes windows.h */
+#if defined(WINAPI_FAMILY_PARTITION)
+# if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && \
+                !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#  define UV__UNIVERSAL_WINDOWS_PLATFORM 1
+# endif
+#endif
+
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 typedef struct pollfd {
   SOCKET fd;
@@ -50,6 +59,10 @@ typedef struct pollfd {
 #include <process.h>
 #include <signal.h>
 #include <sys/stat.h>
+
+#if defined(UV__UNIVERSAL_WINDOWS_PLATFORM)
+# include "uv-winuap-hack.h"
+#endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1600
 # include "stdint-msvc2008.h"
